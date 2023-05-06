@@ -12,31 +12,30 @@ To run this code, you will need the following software:
 - scikit-learn
 - joblib
 - TPOT
+- tensorflow
 
 To install the required packages, you can use pip:
 
 Copy code
 
-`pip install pandas matplotlib scikit-learn joblib tpot`
+`pip install pandas matplotlib scikit-learn joblib tpot tensorflow`
 
 ## Usage
 
 1.  Clone the repository and navigate to the directory:
 
-        `https://github.com/idealadarsh/GeneExpressionKNN.git
+    `https://github.com/idealadarsh/GeneExpressionKNN.git
 
     cd GeneExpressionKNN`
 
 2.  Download the gene expression data file 'lung_data.xlsx' and save it in the same directory as the code.
-3.  Run the Jupyter Notebook:
+3.  Run the Jupyter Notebook
 4.  The program will output the accuracy of the model and display a scatter plot of the gene expression data with the results labeled.
 5.  The optimized model will be saved as 'lung_cancer_model.joblib' in the same directory as the code.
 
 ## Parameters
 
 The TPOTClassifier parameters can be adjusted for different optimization. These are the current parameters in the code:
-
-makefileCopy code
 
 `generations=5
 population_size=50
@@ -58,11 +57,15 @@ We start by importing the necessary libraries, including pandas for reading the 
 
 `import pandas as pd
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from joblib import dump
-from tpot import TPOTClassifier`
+import joblib
+from tpot import TPOTClassifier
+import numpy as np
+from tensorflow.keras.models import load_model`
 
 Next, we read the Excel sheet into a pandas dataframe and replace 'Yes' with 1 and 'No' with 0 in the 'Result' column.
 
@@ -107,13 +110,14 @@ y_pred = model.predict(X_test)`
 
 ## Calculating the accuracy of the model
 
-`accuracy = accuracy_score(y_test, y_pred)
-print('Accuracy:', accuracy)`
+`accuracy_knn = accuracy_score(y_test, y_pred_knn)
+print('Accuracy of KNN:', accuracy_knn)`
 
 Finally, we save the trained model using the `dump()` method from joblib.
 
 `# Saving the trained model
-dump(model, 'model.joblib')`
+dump(k, 'lung_cancer_knn.joblib')
+model.save('lung_cancer_model.h5')`
 
 ## Results
 
