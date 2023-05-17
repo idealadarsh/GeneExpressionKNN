@@ -1,124 +1,96 @@
-# Lung Cancer Detection using KNN and Genetic Algorithm for Optimization
+# Gene Expression Analysis
 
-Lung cancer is one of the most common types of cancer that affects people worldwide. Early detection of lung cancer can significantly increase the survival rate of the patient. In this research paper, we present a method for detecting lung cancer using K-Nearest Neighbors (KNN) algorithm with Genetic Algorithm for Hyperparameter Optimization.
+This code performs gene expression analysis using the provided dataset. It calculates the p-values for each gene and selects genes with a p-value less than 0.05. The selected genes are then saved to an Excel file.
 
-## Getting Started
+## Prerequisites
 
-To run this code, you will need the following software:
+- Python 3.x
+- Required Python packages: scikit-learn, pandas, numpy, statsmodels
 
-- Python 3
-- pandas
-- matplotlib
-- scikit-learn
-- joblib
-- TPOT
-- tensorflow
+You can install the required packages by running the following command in a Jupyter Notebook cell:
 
-To install the required packages, you can use pip:
+pythonCopy code
 
-Copy code
+`!pip install scikit-learn pandas numpy statsmodels`
 
-`pip install pandas matplotlib scikit-learn joblib tpot tensorflow`
+## Code Explanation
+
+1.  The necessary packages are imported:
+    `import pandas as pd`
+    `import numpy as np`
+    `from scipy.stats import ttest_ind`
+2.  The dataset is loaded from the Excel file named `lung_expression_data.xlsx`:  
+    `data = pd.read_excel('lung_expression_data.xlsx')`
+3.  Rows with gene name "NULL" or empty gene names are removed from the dataset:
+    `data = data[data['GENE'] != 'NULL']`
+    `data = data[data['GENE'] != '']`
+4.  The columns are split into two groups: cancerous and normal. Columns starting with 'AD' represent cancerous samples, and columns starting with 'L' represent normal samples:  
+     `cancerous_cols = [col for col in data.columns if col.startswith('AD')]
+normal_cols = [col for col in data.columns if col.startswith('L')]`
+5.  A loop is performed over each row of the dataset to calculate the t-test and p-value for each gene:
+    `p_values = []
+for index, row in data.iterrows():
+    cancerous_values = pd.to_numeric(row[cancerous_cols], errors='coerce')
+    normal_values = pd.to_numeric(row[normal_cols], errors='coerce')
+    t_stat, p_val = ttest_ind(cancerous_values, normal_values, nan_policy='omit')
+    p_values.append(p_val)`
+6.  The calculated p-values are added to the dataset:
+    `data['p_value'] = p_values`
+7.  Genes with a p-value less than 0.05 are selected:
+    `selected_genes = data[data['p_value'] < 0.05]`
+8.  The selected genes are displayed in the console:
+    `print(selected_genes)`
+9.  The selected genes are saved to an Excel file named `selected_genes.xlsx`:
+    `selected_genes.to_excel("selected_genes.xlsx")`
+
+### T-test
+
+A t-test is a statistical hypothesis test used to determine if there is a significant difference between the means of two groups. It helps to assess whether the difference observed between the groups is likely due to chance or if it represents a real difference in the population.
+
+In the context of gene expression analysis, a t-test can be used to compare the expression levels of a particular gene in cancerous samples and normal samples. The null hypothesis assumes that there is no difference in the mean expression levels of the gene between the two groups. The alternative hypothesis suggests that there is a significant difference.
+
+The t-test calculates a t-statistic, which measures the difference between the means relative to the variation within each group. The magnitude of the t-statistic and its corresponding p-value are used to determine the statistical significance of the observed difference.
+
+### P-value
+
+The p-value is a measure of the evidence against the null hypothesis in a statistical hypothesis test. It quantifies the probability of observing a test statistic as extreme as, or more extreme than, the one calculated from the data, assuming that the null hypothesis is true.
+
+In the context of gene expression analysis, the p-value associated with the t-test represents the probability of obtaining the observed difference in expression levels between cancerous and normal samples by chance alone, assuming that there is no true difference. A low p-value indicates that the observed difference is unlikely to be due to chance, suggesting that there may be a significant difference in the gene expression levels between the two groups.
+
+Typically, a threshold value (e.g., 0.05) is chosen as the significance level. If the p-value is less than the significance level, the null hypothesis is rejected, and it is concluded that there is evidence of a significant difference. If the p-value is greater than or equal to the significance level, there is insufficient evidence to reject the null hypothesis.
+
+It's important to note that the p-value alone does not provide information about the magnitude or direction of the difference. It only indicates whether the observed difference is statistically significant or not. Other measures, such as effect size, should be considered to assess the practical significance of the difference.
 
 ## Usage
 
-1.  Clone the repository and navigate to the directory:
-
-    `https://github.com/idealadarsh/GeneExpressionKNN.git
-
-    cd GeneExpressionKNN`
-
-2.  Download the gene expression data file 'lung_data.xlsx' and save it in the same directory as the code.
-3.  Run the Jupyter Notebook
-4.  The program will output the accuracy of the model and display a scatter plot of the gene expression data with the results labeled.
-5.  The optimized model will be saved as 'lung_cancer_model.joblib' in the same directory as the code.
-
-## Parameters
-
-The TPOTClassifier parameters can be adjusted for different optimization. These are the current parameters in the code:
-
-`generations=5
-population_size=50
-verbosity=2
-config_dict={'sklearn.neighbors.KNeighborsClassifier': {'n_neighbors': range(1, 11)}}`
-
-- generations - the number of generations to run the genetic algorithm
-- population_size - the number of individuals in each generation
-- verbosity - how much output to display during the optimization process
-- config_dict - the parameters to optimize for the KNN classifier
+1.  Make sure you have Python 3.x installed on your system.
+2.  Install the required Python packages by running the above command in a Jupyter Notebook cell.
+3.  Download the dataset file named `lung_expression_data.xlsx` and place it in the same directory as the Jupyter Notebook.
+4.  Run the code cells in the Jupyter Notebook to execute the analysis.
 
 ## Dataset
 
-The dataset used in this research is lung cancer data in an Excel sheet named `lung_cancer_data.xlsx`. The columns represent different input features and the target variable 'Result'. The target variable indicates if the patient has lung cancer or not.
+The dataset used for gene expression analysis is provided in an Excel file named `lung_expression_data.xlsx`. The dataset should have the following structure:
 
-## Preprocessing
+| GENE | In 4966 | AD001 | AD002 | AD003 | ... | L001 | L002 | L003 |
+| ---- | ------- | ----- | ----- | ----- | --- | ---- | ---- | ---- |
+| ...  | ...     | ...   | ...   | ...   | ... | ...  | ...  | ...  |
+| ...  | ...     | ...   | ...   | ...   | ... | ...  | ...  | ...  |
 
-We start by importing the necessary libraries, including pandas for reading the dataset, matplotlib for plotting, sklearn for machine learning algorithms, and joblib for saving the trained model.
+- The `GENE` column contains the gene names.
+- Columns starting with `AD` represent cancerous samples.
+- Columns starting with `L` represent normal samples.
 
-`import pandas as pd
-import matplotlib.pyplot as plt
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
-from joblib import dump
-import joblib
-from tpot import TPOTClassifier
-import numpy as np
-from tensorflow.keras.models import load_model`
+Ensure that the dataset file is placed in the same directory as the Jupyter Notebook.
 
-Next, we read the Excel sheet into a pandas dataframe and replace 'Yes' with 1 and 'No' with 0 in the 'Result' column.
+## Output
 
-`# Reading the Excel sheet
-data = pd.read_excel('lung_cancer_data.xlsx')`
+The Jupyter Notebook cells will output the selected genes with a p-value less than 0.05. The selected genes will be displayed in a tabular format.
 
-## Replacing 'YES' with 1 and 'NO' with 0 in the 'Result' column
+Additionally, the selected genes will be saved to an Excel file named `selected_genes.xlsx` in the same directory as the Jupyter Notebook. The file will contain the gene names and corresponding expression values.
 
-`data['Result'] = data['Result'].replace({'YES': 1, 'NO': 0})`
+Please note that if there are no genes with a p-value less than 0.05, the output file will be empty.
 
-After preprocessing, we separate the input features and the target variable and split the data into training and testing sets using the `train_test_split()` method from sklearn.
+## License
 
-`# Separating the input features and the target variable
-X = data.iloc[:, 3:]
-y = data['Result']`
-
-## Splitting the data into training and testing sets
-
-`X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)`
-
-## Genetic Algorithm for Hyperparameter Optimization
-
-To optimize the hyperparameters of the KNN algorithm, we use the Tree-Based Pipeline Optimization Tool (TPOT), a machine learning tool that optimizes machine learning pipelines using genetic programming.
-
-`# Running the genetic algorithm for hyperparameter optimization
-tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2, 
-                      config_dict={'sklearn.neighbors.KNeighborsClassifier': {'n_neighbors': range(1, 11)}})
-tpot.fit(X_train, y_train)`
-
-## Getting the best model found by the genetic algorithm
-
-`model = tpot.fitted_pipeline_`
-
-We set the generations to 5 and the population size to 50. We also specify the range of the n_neighbors parameter for the KNN algorithm to optimize. After running the genetic algorithm, we get the best model found by TPOT and store it in the `model` variable.
-
-## Model Evaluation
-
-We make predictions on the test set using the `predict()` method of the `model` variable and calculate the accuracy of the model using the `accuracy_score()` method from sklearn.
-
-`# Making predictions on the test set
-y_pred = model.predict(X_test)`
-
-## Calculating the accuracy of the model
-
-`accuracy_knn = accuracy_score(y_test, y_pred_knn)
-print('Accuracy of KNN:', accuracy_knn)`
-
-Finally, we save the trained model using the `dump()` method from joblib.
-
-`# Saving the trained model
-dump(k, 'lung_cancer_knn.joblib')
-model.save('lung_cancer_model.h5')`
-
-## Results
-
-The accuracy of the model is displayed using the `print()` function.
+This code is licensed under the [MIT License](https://opensource.org/license/mit). Feel free to modify and use it according to your needs.
