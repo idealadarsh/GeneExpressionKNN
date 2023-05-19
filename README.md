@@ -127,6 +127,10 @@ The output will include a classification report which includes precision, recall
 
 Finally, it will print the number of predicted cancer mediating genes that match and don't match the known list, and save the predicted gene names to a CSV file named `predicted_genes.csv`.
 
+## Google Colab
+
+You can also run this code on Google Colab. Simply upload the data files to your Google Drive, and then run the following code: [XGBoost.ipynb](https://colab.research.google.com/drive/1xpV0HwA8_5ss46h9DPGHBBuwjuVAOvl4?usp=sharing)
+
 ## License
 
 This code is licensed under the [MIT License](https://opensource.org/license/mit). Feel free to modify and use it according to your needs.
