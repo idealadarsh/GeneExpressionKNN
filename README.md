@@ -1,96 +1,136 @@
-# Gene Expression Analysis
+# Selection of Lung Cancer Mediating Genes
 
-This code performs gene expression analysis using the provided dataset. It calculates the p-values for each gene and selects genes with a p-value less than 0.05. The selected genes are then saved to an Excel file.
+This project applies machine learning to gene expression data to predict if a gene is a mediator in lung cancer or not. Specifically, we use the XGBoost Classifier to perform this binary classification task.
 
 ## Prerequisites
 
-- Python 3.x
-- Required Python packages: scikit-learn, pandas, numpy, statsmodels
+Ensure that the following Python libraries are installed:
 
-You can install the required packages by running the following command in a Jupyter Notebook cell:
+- pandas
+- scipy
+- scikit-learn
+- xgboost
+- matplotlib
 
-pythonCopy code
+You can install them via pip:
 
-`!pip install scikit-learn pandas numpy statsmodels`
+```bash
+pip install pandas scipy scikit-learn xgboost matplotlib
+```
 
-## Code Explanation
+You'll also need the following data files in the same directory as your notebook:
 
-1.  The necessary packages are imported:
-    `import pandas as pd`
-    `import numpy as np`
-    `from scipy.stats import ttest_ind`
-2.  The dataset is loaded from the Excel file named `lung_expression_data.xlsx`:  
-    `data = pd.read_excel('lung_expression_data.xlsx')`
-3.  Rows with gene name "NULL" or empty gene names are removed from the dataset:
-    `data = data[data['GENE'] != 'NULL']`
-    `data = data[data['GENE'] != '']`
-4.  The columns are split into two groups: cancerous and normal. Columns starting with 'AD' represent cancerous samples, and columns starting with 'L' represent normal samples:  
-     `cancerous_cols = [col for col in data.columns if col.startswith('AD')]
-normal_cols = [col for col in data.columns if col.startswith('L')]`
-5.  A loop is performed over each row of the dataset to calculate the t-test and p-value for each gene:
-    `p_values = []
-for index, row in data.iterrows():
-    cancerous_values = pd.to_numeric(row[cancerous_cols], errors='coerce')
-    normal_values = pd.to_numeric(row[normal_cols], errors='coerce')
-    t_stat, p_val = ttest_ind(cancerous_values, normal_values, nan_policy='omit')
-    p_values.append(p_val)`
-6.  The calculated p-values are added to the dataset:
-    `data['p_value'] = p_values`
-7.  Genes with a p-value less than 0.05 are selected:
-    `selected_genes = data[data['p_value'] < 0.05]`
-8.  The selected genes are displayed in the console:
-    `print(selected_genes)`
-9.  The selected genes are saved to an Excel file named `selected_genes.xlsx`:
-    `selected_genes.to_excel("selected_genes.xlsx")`
+- `lung_expression_data.xlsx` : This is your main dataset which should contain gene expression data.
+- `newncbi_Lung.csv` : This file should contain known gene names and aliases.
 
-### T-test
+## Running the Code
 
-A t-test is a statistical hypothesis test used to determine if there is a significant difference between the means of two groups. It helps to assess whether the difference observed between the groups is likely due to chance or if it represents a real difference in the population.
+1. Open Jupyter notebook. If you haven't installed Jupyter, you can install it with pip:
 
-In the context of gene expression analysis, a t-test can be used to compare the expression levels of a particular gene in cancerous samples and normal samples. The null hypothesis assumes that there is no difference in the mean expression levels of the gene between the two groups. The alternative hypothesis suggests that there is a significant difference.
+   ```bash
+   pip install jupyter
+   ```
 
-The t-test calculates a t-statistic, which measures the difference between the means relative to the variation within each group. The magnitude of the t-statistic and its corresponding p-value are used to determine the statistical significance of the observed difference.
+   To run Jupyter notebook, use the following command:
 
-### P-value
+   ```bash
+   jupyter notebook
+   ```
 
-The p-value is a measure of the evidence against the null hypothesis in a statistical hypothesis test. It quantifies the probability of observing a test statistic as extreme as, or more extreme than, the one calculated from the data, assuming that the null hypothesis is true.
+2. Navigate to the directory containing the Python code and data files.
 
-In the context of gene expression analysis, the p-value associated with the t-test represents the probability of obtaining the observed difference in expression levels between cancerous and normal samples by chance alone, assuming that there is no true difference. A low p-value indicates that the observed difference is unlikely to be due to chance, suggesting that there may be a significant difference in the gene expression levels between the two groups.
+3. Open a new Python notebook via the `New` button.
 
-Typically, a threshold value (e.g., 0.05) is chosen as the significance level. If the p-value is less than the significance level, the null hypothesis is rejected, and it is concluded that there is evidence of a significant difference. If the p-value is greater than or equal to the significance level, there is insufficient evidence to reject the null hypothesis.
+4. Copy the code into a new cell in the Jupyter notebook.
 
-It's important to note that the p-value alone does not provide information about the magnitude or direction of the difference. It only indicates whether the observed difference is statistically significant or not. Other measures, such as effect size, should be considered to assess the practical significance of the difference.
+5. Run the cell by clicking `Run` or pressing `Shift+Enter`.
 
-## Usage
+The script will load the gene expression data, preprocess it, perform t-tests to determine if a gene is overexpressed in cancer, train an XGBoost classifier, and make predictions. It will then evaluate the model and predict on the whole dataset to find all potential cancer mediating genes. It will also compare these predicted gene names against a list of known gene names and aliases, reporting how many match and don't match.
 
-1.  Make sure you have Python 3.x installed on your system.
-2.  Install the required Python packages by running the above command in a Jupyter Notebook cell.
-3.  Download the dataset file named `lung_expression_data.xlsx` and place it in the same directory as the Jupyter Notebook.
-4.  Run the code cells in the Jupyter Notebook to execute the analysis.
+# Code Explainer
 
-## Dataset
+The code is divided into different sections, each performing a specific task. Here's a brief explanation of each part:
 
-The dataset used for gene expression analysis is provided in an Excel file named `lung_expression_data.xlsx`. The dataset should have the following structure:
+## 1. Importing Libraries:
 
-| GENE | In 4966 | AD001 | AD002 | AD003 | ... | L001 | L002 | L003 |
-| ---- | ------- | ----- | ----- | ----- | --- | ---- | ---- | ---- |
-| ...  | ...     | ...   | ...   | ...   | ... | ...  | ...  | ...  |
-| ...  | ...     | ...   | ...   | ...   | ... | ...  | ...  | ...  |
+```python
+import pandas as pd
+import csv
+from scipy.stats import ttest_ind
+from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
+import matplotlib.pyplot as plt
+```
 
-- The `GENE` column contains the gene names.
-- Columns starting with `AD` represent cancerous samples.
-- Columns starting with `L` represent normal samples.
+Here, we import all the necessary libraries for data manipulation (pandas), statistical testing (scipy), machine learning (sklearn, xgboost), and plotting (matplotlib).
 
-Ensure that the dataset file is placed in the same directory as the Jupyter Notebook.
+## 2. Loading and Preprocessing the Data:
 
-## Output
+```python
+df = pd.read_excel('lung_expression_data.xlsx').dropna()
+df = df[df['GENE'] != 'NULL']
 
-The Jupyter Notebook cells will output the selected genes with a p-value less than 0.05. The selected genes will be displayed in a tabular format.
+cancer_columns = [col for col in df.columns if col.startswith(('AD', 'L')) and not col.startswith('LN')]
+normal_columns = [col for col in df.columns if col.startswith('LN')]
+```
 
-Additionally, the selected genes will be saved to an Excel file named `selected_genes.xlsx` in the same directory as the Jupyter Notebook. The file will contain the gene names and corresponding expression values.
+We load the data from an Excel file into a pandas DataFrame. We then drop any rows with missing values, and any rows where the 'GENE' value is 'NULL'. The columns are divided into two categories: those that represent cancerous samples and those that represent normal samples.
 
-Please note that if there are no genes with a p-value less than 0.05, the output file will be empty.
+## 3. Performing t-tests:
+
+```python
+df['p_value'] = [ttest_ind(row[cancer_columns], row[normal_columns]).pvalue for _, row in df.iterrows()]
+```
+
+Here, we perform a t-test for each row, comparing the cancerous samples to the normal samples. We store the p-value of the t-test in a new column. A lower p-value indicates that the means of the cancerous and normal samples are significantly different.
+
+## 4. Creating Labels for the Model:
+
+```python
+df['is_cancer_mediator'] = ((df['p_value'] < 0.05) & (df[cancer_columns].mean(axis=1) > df[normal_columns].mean(axis=1))).astype(int)
+```
+
+We then label each gene as a potential cancer mediator (1) or not (0) based on the p-value and the mean difference between the cancerous and normal samples.
+
+## 5. Training the Model:
+
+```python
+X_train, X_test, y_train, y_test = train_test_split(df[cancer_columns + normal_columns], df['is_cancer_mediator'], test_size=0.2, random_state=42)
+clf = XGBClassifier(use_label_encoder=False, eval_metric='logloss').fit(X_train, y_train)
+```
+
+We split the data into a training set and a test set. Then, we create an XGBoost classifier and fit the model using the training data.
+
+## 6. Evaluating the Model:
+
+```python
+y_pred = clf.predict(X_test)
+print(classification_report(y_test, y_pred))
+```
+
+We use the model to make predictions on the test data, and then print a classification report, which includes precision, recall, f1-score, and support for both classes.
+
+## 7. Plotting the ROC Curve:
+
+```python
+y_pred_proba = clf.predict_proba(X_test)[:, 1]
+fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+plt.plot(fpr, tpr, label=f'AUC-ROC: {roc_auc_score(y_test, y_pred_proba):.2f}')
+```
+
+Here, we calculate the probabilities of the positive class, and use these to compute the ROC curve, which is a plot of the true positive rate (sensitivity) against the false positive rate (1-specificity) at
+
+## Results
+
+The output will include a classification report which includes precision, recall, f1-score, and support for both classes. The model's accuracy and the area under the ROC curve (AUC-ROC) will also be displayed. The ROC curve itself will be plotted.
+
+Finally, it will print the number of predicted cancer mediating genes that match and don't match the known list, and save the predicted gene names to a CSV file named `predicted_genes.csv`.
 
 ## License
 
 This code is licensed under the [MIT License](https://opensource.org/license/mit). Feel free to modify and use it according to your needs.
+
+## Author
+
+This code was written by [Adarsh Kumar](https://github.com/idealadarsh).
